@@ -10,7 +10,7 @@ import org.junit.Assert
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class BudgetApiKtTest : ServerTest() {
+class BudgetResponseApiKtTest : ServerTest() {
 
     @BeforeEach
     internal fun setUp() {
