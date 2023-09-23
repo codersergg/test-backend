@@ -3,9 +3,7 @@ package mobi.sevenwinds.app.budget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import mobi.sevenwinds.app.author.AuthorTable
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.leftJoin
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -38,8 +36,11 @@ object BudgetService {
 
                 val total = query.count()
 
-                val totalByType = query
-                    .asSequence()
+                val totalFilteredAndSorted = query
+                    .orderBy(
+                        BudgetTable.month to SortOrder.ASC,
+                        BudgetTable.amount to SortOrder.DESC
+                    )
                     .filter {
                         if (param.name != null && it[BudgetTable.authorId] != null) {
                             it[AuthorTable.fullName].contains(
@@ -48,15 +49,12 @@ object BudgetService {
                         } else param.name == null
                     }
                     .map { mapBudgetResponse(it) }
-                    .sortedWith(compareBy(BudgetResponse::month).thenByDescending(BudgetResponse::amount))
-                    .toList()
 
-
-                val sumByType = totalByType
+                val sumByType = totalFilteredAndSorted
                     .groupBy { it.type.name }
                     .mapValues { it.value.sumOf { v -> v.amount } }
 
-                val items = totalByType
+                val items = totalFilteredAndSorted
                     .drop(param.offset)
                     .take(param.limit)
 
